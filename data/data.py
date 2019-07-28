@@ -5,6 +5,7 @@ from torch.utils.data import Dataset, DataLoader
 from torch.utils.data.sampler import Sampler
 from pathlib import Path
 import torchvision.transforms as transforms
+import torchvision.transforms.functional as F_transforms
 import imgaug as ia
 import imgaug.augmenters as iaa
 
@@ -15,17 +16,46 @@ def setup_traindata(config):
     im_size = random.randint(im_sizes[0], im_sizes[1])
     uniform_size = transforms.Compose([
       transforms.Resize((im_size, im_size)),
-      transforms.ToTensor()
+      transforms.RandomHorizontalFlip(0.5),
+      transforms.ToTensor(),
+      transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                             std=[0.229, 0.224, 0.225])
     ])
 
     class1_ims = [uniform_size(b[0]) for b in batch]
     class2_ims = [uniform_size(b[1]) for b in batch]
-    return torch.stack(class1_ims), torch.stack(class1_ims)
+    return torch.stack(class1_ims), torch.stack(class2_ims)
 
   batch_size = config.batch_size
   dataset = BinaryDataset(config.dataset)
   sampler = BinarySampler(dataset)
-  return DataLoader(dataset, batch_size=batch_size, num_workers=config.num_workers, collate_fn=collate, sampler=sampler)
+  return DataLoader(dataset, batch_size=batch_size, num_workers=config.num_workers, collate_fn=collate, sampler=sampler, drop_last=True)
+
+
+def setup_valdata(config):
+  def collate(batch):
+    im_size = config.image_validation_size
+    uniform_size = transforms.Compose([
+      transforms.Resize((im_size, im_size)),
+      transforms.ToTensor(),
+      transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                             std=[0.229, 0.224, 0.225])
+    ])
+
+    class1_ims = [uniform_size(b[0]) for b in batch]
+    class2_ims = [uniform_size(b[1]) for b in batch]
+    return torch.stack(class1_ims), torch.stack(class2_ims)
+
+  ref_dataset = BinaryDataset(config.reference_dataset)
+  batch_size = config.batch_size
+  ref_loader = DataLoader(ref_dataset, batch_size=batch_size, num_workers=config.num_workers, collate_fn=collate)
+
+  dataset = BinaryDataset(config.val_dataset)
+  loader = DataLoader(dataset, batch_size=batch_size, num_workers=config.num_workers, collate_fn=collate)
+
+  return ref_loader, loader
+
+
  
 
 class BinarySampler(Sampler):
@@ -59,6 +89,7 @@ class BinaryDataset(Dataset):
 
     return cat, dog
 
+  # TODO: Check so that the shuffle creates dynamic pairs over epochs
   def shuffle_ims(self):
     random.shuffle(self.cats_dataset.image_files)
     random.shuffle(self.dogs_dataset.image_files)
@@ -85,8 +116,6 @@ class ImageDataset(Dataset):
 
   def __getitem__(self, index):
     im_path = self.image_files[index]
-    if index == 0:
-      print(im_path)
     im = Image.open(im_path)
 
     return im

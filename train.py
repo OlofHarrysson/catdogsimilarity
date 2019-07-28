@@ -9,6 +9,8 @@ from utils.utils import seed_program
 # Would scale beyond binary classification if computer is powerful or if we do one class at a time and dont backprop every step (for stability).
 # At production, if you missclassify an example you can simply add that example to your reference images/embeddings without retraining.
 
+# Instead of doing all pairs, do I want to just match to 10% closest for the possibility of having more than one cluster?
+
 def parse_args():
   p = argparse.ArgumentParser()
 

@@ -1,5 +1,5 @@
 import torch
-from itertools import combinations
+from itertools import *
 
 def create_positive_pair(embeddings):
   # TODO: Everything is duplicated twice. Need to mask out better?
@@ -31,27 +31,31 @@ def create_pairs(embs1, embs2):
 
 
 def test():
-  b_size = 3
+  b_size = 32
   batch = range(1, b_size+1)
   batch2 = [b+.5 for b in batch]
 
-  pairs = create_pairs(torch.tensor(batch), torch.tensor(batch2))
+  inp1 = torch.tensor(batch).unsqueeze(1)
+  inp2 = torch.tensor(batch2).unsqueeze(1)
+  pairs = create_pairs(inp1, inp2)
 
-  print(pairs.shape)
+  p1, p2, p3 = pairs
+  # print(p1)
+  # print(p2)
+  print(p3)
 
-  # print("a: {},  p: {},  n: {}".format(a, p, n))
-  # print('n={} -> {} comparisons'.format(len_b, len(n)))
 
 def test2():
-  b_size = 3
+  b_size = 32 # Per class
   batch = range(1, b_size+1)
   combs = list(combinations(batch, 2))
-  print(combs)
+  # print(combs)
 
-  inds = range(b_size)
-  ind_comb = list(combinations(inds, 2))
-  print(ind_comb)
+  perms = list(product(batch, repeat=2))
+  # print(perms)
+
+  print(f'n={b_size} -> {len(combs)} same-class comparisons (twice) & {len(perms)} between-class comparisons -> {len(combs)*2 + len(perms)} total comparisons')
 
 if __name__ == '__main__':
-  test()
-  # test2()
+  # test()
+  test2()

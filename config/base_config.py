@@ -23,12 +23,14 @@ class DefaultConfig():
     self.config = config_str 
 
     self.dataset = 'data/datasets/catsdogs/train'
+    self.reference_dataset = 'data/datasets/catsdogs/reference'
+    self.val_dataset = 'data/datasets/catsdogs/val'
 
     self.n_model_features = 10
 
     # Range of Data input size image sizes
-    # self.image_input_size = (200, 500)
-    self.image_input_size = (300, 300)
+    self.image_input_size = (224, 224)
+    self.image_validation_size = 224
 
     self.batch_size = 4
 
@@ -37,10 +39,10 @@ class DefaultConfig():
     self.start_lr = 1e-3
     self.end_lr = 1e-4
 
-    self.optim_steps = 20000
+    self.optim_steps = 10000
     self.lr_step_frequency = 100
 
-    self.validation_freq = 200
+    self.validation_freq = 100
 
     # Seed to create reproducable training results
     self.seed = random.randint(0, 2**32 - 1)
@@ -62,9 +64,17 @@ class Laptop(DefaultConfig):
     '''
     self.use_gpu = False
     self.image_input_size = (30, 35)
+    # self.n_model_features = 1
     self.n_model_features = 300
     self.max_val_batches = 10
-    self.batch_size = 16
+    self.batch_size = 3
+    # self.batch_size = 16
+    self.val_dataset = 'data/datasets/catsdogs/val_mini'
+
+    self.image_validation_size = 30
+    self.validation_freq = 20
+
+
 
 
 
@@ -73,7 +83,10 @@ class Colab(DefaultConfig):
     super().__init__(config_str)
     self.num_workers = 16
 
-    self.n_model_features = 8192
+    self.n_model_features = 512
 
     self.batch_size = 32
-    self.validation_freq = 50
+    # self.validation_freq = 50
+
+    self.pretrained = True
+

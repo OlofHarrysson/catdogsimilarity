@@ -4,9 +4,10 @@ import numpy as np
 from utils.utils import ProgressbarWrapper as Progressbar
 from data.data import setup_traindata
 from logger import Logger
-# from utils.validator import Validator
+from utils.validator import Validator
 import torchvision.transforms as transforms
 from embedding_combinations import create_pairs
+from utils.loss import MyCosineLoss
 
 
 
@@ -31,8 +32,9 @@ def train(model, config):
   # clear_output_dir()
   optimizer, lr_scheduler = init_training(model, config)
   logger = Logger(config)
-  # validator = Validator(model, logger, config)
-  cos_loss_fn = torch.nn.CosineEmbeddingLoss(margin=0.1)
+  validator = Validator(model, logger, config)
+  cos_loss_fn = torch.nn.CosineEmbeddingLoss(margin=0.5)
+  pos_loss_fn = MyCosineLoss(margin=0.5)
 
   # Data
   dataloader = setup_traindata(config)
@@ -52,8 +54,8 @@ def train(model, config):
       pbar.update(epoch, batch_i)
 
       # Validation
-      # if optim_steps % val_freq == 0:
-      #   validator.validate(optim_steps)
+      if optim_steps % val_freq == 0:
+        validator.validate(optim_steps)
 
       # Decrease learning rate
       if optim_steps % config.lr_step_frequency == 0:
@@ -64,30 +66,29 @@ def train(model, config):
       inputs = torch.cat((cats, dogs))
 
       outputs = model(inputs)
-      cat_embs, dog_embs = outputs
+      cat_embs, dog_embs = outputs.chunk(2)
 
       catpair, dogpair, catdogpair = create_pairs(cat_embs, dog_embs)
 
       # Cosine similarity loss
-      y = torch.ones(catpair[0].size(0)).to(model.device)
-      cat_loss = cos_loss_fn(catpair[0], catpair[1], y)
-
-      dog_loss = cos_loss_fn(dogpair[0], dogpair[1], y)
+      cat_loss = pos_loss_fn(catpair[0], catpair[1])
+      dog_loss = pos_loss_fn(dogpair[0], dogpair[1] )
 
       y = torch.ones(catdogpair[0].size(0)).to(model.device)
       cat_dog_loss = cos_loss_fn(catdogpair[0], catdogpair[1], -y)
 
-      # loss_dict = dict(cat_loss=cat_loss, dog_loss=dog_loss, cat_dog_loss=cat_dog_loss)
-      loss_dict = dict(cat_dog_loss=cat_dog_loss)
+      loss_dict = dict(cat_loss=cat_loss, dog_loss=dog_loss, cat_dog_loss=cat_dog_loss)
+      # loss_dict = dict(cat_dog_loss=cat_dog_loss)
 
       loss = sum(loss_dict.values())
-      print(loss.item())
       loss.backward()
 
       optimizer.step()
       optim_steps += 1
 
-      logger.log_cosine(catpair, dogpair, catdogpair)
+      logger.log_cosine(catpair, dogpair, catdogpair, optim_steps)
+      logger.log_loss(loss, optim_steps)
+      logger.log_loss_percent(loss_dict, optim_steps)
       
       # Frees up GPU memory
       del data; del outputs
