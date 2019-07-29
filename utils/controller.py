@@ -22,7 +22,8 @@ def init_training(model, config):
   # Optimizer & Scheduler
   # TODO CyclicLR
   params = filter(lambda p: p.requires_grad, model.parameters())
-  optimizer = torch.optim.Adam(params, lr=config.start_lr)
+  # optimizer = torch.optim.Adam(params, lr=config.start_lr)
+  optimizer = torch.optim.SGD(params, lr=config.start_lr, momentum=0.9)
   scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=config.optim_steps/config.lr_step_frequency, eta_min=config.end_lr)
 
   return optimizer, scheduler
@@ -33,8 +34,8 @@ def train(model, config):
   optimizer, lr_scheduler = init_training(model, config)
   logger = Logger(config)
   validator = Validator(model, logger, config)
-  cos_loss_fn = torch.nn.CosineEmbeddingLoss(margin=0.5)
-  pos_loss_fn = MyCosineLoss(margin=0.5)
+  cos_loss_fn = torch.nn.CosineEmbeddingLoss(margin=0.45)
+  pos_loss_fn = MyCosineLoss(margin=0.45)
 
   # Data
   dataloader = setup_traindata(config)
@@ -72,12 +73,13 @@ def train(model, config):
 
       # Cosine similarity loss
       cat_loss = pos_loss_fn(catpair[0], catpair[1])
-      dog_loss = pos_loss_fn(dogpair[0], dogpair[1] )
+      dog_loss = pos_loss_fn(dogpair[0], dogpair[1])
 
       y = torch.ones(catdogpair[0].size(0)).to(model.device)
       cat_dog_loss = cos_loss_fn(catdogpair[0], catdogpair[1], -y)
 
       loss_dict = dict(cat_loss=cat_loss, dog_loss=dog_loss, cat_dog_loss=cat_dog_loss)
+      # loss_dict = dict(cat_loss=cat_loss, dog_loss=dog_loss)
       # loss_dict = dict(cat_dog_loss=cat_dog_loss)
 
       loss = sum(loss_dict.values())

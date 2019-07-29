@@ -108,9 +108,9 @@ class Logger():
         go.layout.Shape(
           type="line",
           x0=-0.5,
-          y0=0.55,
+          y0=0.5,
           x1=2.5,
-          y1=0.55,
+          y1=0.5,
           line=dict(
             width=2,
             dash="dot",
@@ -205,12 +205,12 @@ class Logger():
       update='append',
       win='Accuracy',
       opts=dict(
-          xlabel='Steps',
-          ylabel='Accuracy',
-          title=f'Val Accuracy',
-          ytickmin = 0.7,
-          ytickmax = 1,
-          legend=legends,
+        xlabel='Steps',
+        ylabel='Accuracy',
+        title=f'Val Accuracy',
+        ytickmin = 0.7,
+        ytickmax = 1,
+        legend=legends,
       )
     )
 
@@ -231,6 +231,8 @@ class Logger():
       else:
         Y = np.append(Y, labels*2, axis=0)
 
+    min_vals = X.min(0)
+    max_vals = X.max(0)
     self.viz.scatter(
       X=X,
       Y=Y,
@@ -248,10 +250,10 @@ class Logger():
                 dash='dot',
                 width='2'),
               type='line',
-              x0= 0,
-              x1= 1,
-              y0= 0,
-              y1= 1)]
+              x0= min_vals[0],
+              x1= max_vals[1],
+              y0= min_vals[0],
+              y1= max_vals[1])]
             ))
       )
     )

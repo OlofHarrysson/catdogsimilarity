@@ -15,8 +15,8 @@ def setup_traindata(config):
     im_sizes = config.image_input_size
     im_size = random.randint(im_sizes[0], im_sizes[1])
     uniform_size = transforms.Compose([
-      transforms.Resize((im_size, im_size)),
       transforms.RandomHorizontalFlip(0.5),
+      transforms.Resize((im_size, im_size)),
       transforms.ToTensor(),
       transforms.Normalize(mean=[0.485, 0.456, 0.406],
                              std=[0.229, 0.224, 0.225])
@@ -56,7 +56,22 @@ def setup_valdata(config):
   return ref_loader, loader
 
 
- 
+def setup_testdata(config):
+  def collate(batch):
+    uniform_size = transforms.Compose([
+      transforms.ToTensor(),
+      transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                             std=[0.229, 0.224, 0.225])
+    ])
+
+    ims = [uniform_size(b) for b in batch]
+    return torch.stack(ims)
+
+  dataset = ImageDatasetSorted(config.val_dataset)
+  loader = DataLoader(dataset, batch_size=1, num_workers=config.num_workers, collate_fn=collate)
+
+  return loader
+
 
 class BinarySampler(Sampler):
   def __init__(self, data_source):
@@ -110,6 +125,38 @@ class ImageDataset(Dataset):
       self.image_files.extend(image_files)
 
     assert self.image_files,'{} dataset is empty'.format(im_dir)
+    get_file_nbr = lambda path: int(path.stem.split('.')[1])
+    self.image_files.sort(key=get_file_nbr)
+
+  def __len__(self):
+    return len(self.image_files)
+
+  def __getitem__(self, index):
+    im_path = self.image_files[index]
+    im = Image.open(im_path)
+
+    return im
+
+
+class ImageDatasetSorted(Dataset):
+  def __init__(self, im_dirs):
+    self.image_files = []
+
+    im_types = ['.jpg', '.png']
+    is_image = lambda path: path.suffix in im_types
+
+    if type(im_dirs) == str:
+      im_dirs = [im_dirs]
+
+    for im_dir in im_dirs:
+      assert Path(im_dir).exists(), "Directory doesn't exist"
+      image_files = [f for f in Path(im_dir).glob('**/*') if is_image(f)]
+      self.image_files.extend(image_files)
+
+    assert self.image_files,'{} dataset is empty'.format(im_dir)
+
+    get_file_nbr = lambda path: int(path.stem)
+    self.image_files.sort(key=get_file_nbr)
 
   def __len__(self):
     return len(self.image_files)

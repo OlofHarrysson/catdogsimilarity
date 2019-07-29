@@ -29,8 +29,8 @@ class DefaultConfig():
     self.n_model_features = 10
 
     # Range of Data input size image sizes
-    self.image_input_size = (224, 224)
-    self.image_validation_size = 224
+    self.image_input_size = (224, 350)
+    self.image_validation_size = 60
 
     self.batch_size = 4
 
@@ -44,14 +44,17 @@ class DefaultConfig():
 
     self.validation_freq = 100
 
+    self.n_model_features = 512
+
     # Seed to create reproducable training results
     self.seed = random.randint(0, 2**32 - 1)
+
 
   def get_parameters(self):
     return OrderedDict(sorted(vars(self).items()))
 
-  def __str__(self): # TODO return str
-    # class name, etc
+  def __str__(self):
+    # TODO: class name, something else?
     return str(vars(self))
 
 class Laptop(DefaultConfig):
@@ -65,8 +68,6 @@ class Laptop(DefaultConfig):
     self.use_gpu = False
     self.image_input_size = (30, 35)
     # self.n_model_features = 1
-    self.n_model_features = 300
-    self.max_val_batches = 10
     self.batch_size = 3
     # self.batch_size = 16
     self.val_dataset = 'data/datasets/catsdogs/val_mini'
@@ -74,19 +75,32 @@ class Laptop(DefaultConfig):
     self.image_validation_size = 30
     self.validation_freq = 20
 
-
-
-
-
 class Colab(DefaultConfig):
   def __init__(self, config_str):
     super().__init__(config_str)
-    self.num_workers = 16
-
-    self.n_model_features = 512
+    self.num_workers = 8
 
     self.batch_size = 32
     # self.validation_freq = 50
 
     self.pretrained = True
 
+class Predict(DefaultConfig):
+  def __init__(self, config_str):
+    super().__init__(config_str)
+    self.use_gpu = False
+    self.batch_size = 32
+    # self.val_dataset = 'data/datasets/catsdogs/val_mini'
+    self.reference_dataset = 'data/datasets/catsdogs/train'
+    # self.reference_dataset = 'data/datasets/catsdogs/reference'
+    self.model_path = 'saved_models/topk-1-acc0.9875-step800.pth'
+
+
+
+class Submission(DefaultConfig):
+  def __init__(self, config_str):
+    super().__init__(config_str)
+    self.use_gpu = False
+    self.batch_size = 32
+    self.val_dataset = 'data/datasets/catsdogs/test1'
+    self.model_path = 'output/mean-acc0.9837.pth'

@@ -8,6 +8,10 @@ def choose_config(config_str):
     config_obj = Laptop(config_str)
   elif config_str == 'colab':
     config_obj = Colab(config_str)
+  elif config_str == 'predict':
+    config_obj = Predict(config_str)
+  elif config_str == 'submit':
+    config_obj = Submission(config_str)
   else:
     raise NotImplementedError('Add your config class')
 
