@@ -30,11 +30,11 @@ class DefaultConfig():
 
     # Range of Data input size image sizes
     self.image_input_size = (224, 350)
-    self.image_validation_size = 60
+    self.image_validation_size = 300
 
     self.batch_size = 4
 
-    self.pretrained = False
+    self.pretrained = True
 
     self.start_lr = 1e-3
     self.end_lr = 1e-4
@@ -78,12 +78,10 @@ class Laptop(DefaultConfig):
 class Colab(DefaultConfig):
   def __init__(self, config_str):
     super().__init__(config_str)
-    self.num_workers = 8
+    self.num_workers = 16
 
     self.batch_size = 32
     # self.validation_freq = 50
-
-    self.pretrained = True
 
 class Predict(DefaultConfig):
   def __init__(self, config_str):
@@ -91,8 +89,8 @@ class Predict(DefaultConfig):
     self.use_gpu = False
     self.batch_size = 32
     # self.val_dataset = 'data/datasets/catsdogs/val_mini'
-    self.reference_dataset = 'data/datasets/catsdogs/train'
-    # self.reference_dataset = 'data/datasets/catsdogs/reference'
+    # self.reference_dataset = 'data/datasets/catsdogs/train'
+    self.reference_dataset = 'data/datasets/catsdogs/reference'
     self.model_path = 'saved_models/topk-1-acc0.9875-step800.pth'
 
 

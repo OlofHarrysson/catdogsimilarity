@@ -4,6 +4,9 @@ import torch.nn as nn
 import numpy as np
 from utils.utils import EMAverage
 import plotly.graph_objects as go
+from PIL import Image
+import torchvision.transforms as transforms
+
 
 def clear_envs(viz):
   [viz.close(env=env) for env in viz.get_env_list()] # Kills wind
@@ -219,10 +222,12 @@ class Logger():
     return best_acc, name
 
 
-  def log_boundrary(self, preds_dict, name, step):
+  def log_boundrary(self, preds_dict, name, step, textlabels=None):
     X, Y = np.empty((0, 2)), np.empty((0, 1))
     for metric, preds in preds_dict.items():
       preds = np.array(preds)
+      if preds.size == 0:
+        continue
       X = np.append(X, preds, axis=0)
 
       labels = np.ones((preds.shape[0], 1))
@@ -243,6 +248,7 @@ class Logger():
         markersize=3,
         xlabel='Same',
         ylabel='Different',
+        textlabels=textlabels,
         layoutopts=dict(
           plotly=dict(
             shapes=[dict(
@@ -257,3 +263,11 @@ class Logger():
             ))
       )
     )
+
+  def log_images(self, image_paths):
+    to_tensor = transforms.ToTensor()
+    for im_path in image_paths:
+      im = Image.open(im_path)
+      caption = im_path.stem.replace('.', '-')
+      opts=dict(title=caption)
+      self.viz.image(to_tensor(im), opts=opts)

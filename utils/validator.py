@@ -72,8 +72,8 @@ def calc_embeddings(model, dataloader):
     if ind % 10 == 0:
       print(ind)
 
-    if ind > 10:
-      break
+    # if ind > 10:
+      # break
 
     cat_input, dog_input = data
 

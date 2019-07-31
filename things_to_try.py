@@ -17,3 +17,9 @@
 # Compare one reference images at a time against all val images. If the reference image is closer to the wrong class it's a bad reference image.
 
 # Two types of outliers. Outlier in ref image, outlier in pred image. How does each one affect result and how to deal with each one?
+
+# Can I make several layers at the very end of the network that are initialized differently to hopefully average/regularize the network?
+
+# Just train last few layers of network
+
+# Can also add arbitrary images serve as negative images -> produces low similarity scores if the network doesn't spot the class features. 

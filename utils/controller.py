@@ -34,8 +34,8 @@ def train(model, config):
   optimizer, lr_scheduler = init_training(model, config)
   logger = Logger(config)
   validator = Validator(model, logger, config)
-  cos_loss_fn = torch.nn.CosineEmbeddingLoss(margin=0.45)
-  pos_loss_fn = MyCosineLoss(margin=0.45)
+  cos_loss_fn = torch.nn.CosineEmbeddingLoss(margin=0.33)
+  pos_loss_fn = MyCosineLoss(margin=0.33)
 
   # Data
   dataloader = setup_traindata(config)
