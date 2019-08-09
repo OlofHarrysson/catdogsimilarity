@@ -127,6 +127,7 @@ class ImageDataset(Dataset):
     assert self.image_files,'{} dataset is empty'.format(im_dir)
     get_file_nbr = lambda path: int(path.stem.split('.')[1])
     self.image_files.sort(key=get_file_nbr)
+    self.image_files = self.image_files[:500] # TODO: testing low data regime
 
   def __len__(self):
     return len(self.image_files)

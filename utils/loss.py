@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class MyCosineLoss(nn.Module):
+class PositiveCosineLoss(nn.Module):
   def __init__(self, margin=0):
     super().__init__()
     self.margin = margin
@@ -18,8 +18,25 @@ class MyCosineLoss(nn.Module):
     return loss.mean()
 
 
+class ZeroCosineLoss(nn.Module):
+  def __init__(self, margin=0):
+    super().__init__()
+    self.margin = margin
+    self.metric = nn.CosineSimilarity()
+
+
+  def forward(self, x1, x2):
+    sim = self.metric(x1, x2)
+    # loss = torch.abs(sim - self.margin)
+    loss = sim.abs()
+    loss = loss - self.margin
+    loss = torch.clamp(loss, 0, 1)
+    return loss.mean()
+
+
 if __name__ == '__main__':
-  loss_fn = MyCosineLoss(margin=0.5)
+  # loss_fn = PositiveCosineLoss(margin=0.5)
+  loss_fn = ZeroCosineLoss(margin=0)
   x1 = torch.randn(4, 3)
   x2 = torch.randn(4, 3)
   

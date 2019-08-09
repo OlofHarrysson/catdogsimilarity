@@ -71,8 +71,8 @@ def main(config_str):
   # Images
   # wrong_paths = Counter(all_wrong_paths)
   # images_to_log = [p for p, v in wrong_paths.items() if v > 7] # Most common
-  images_to_log = set(all_wrong_paths)
-  # logger.log_images(images_to_log) #
+  # images_to_log = set(all_wrong_paths)
+  # logger.log_images(images_to_log)
 
   # Accuracy
   embs = cat_embs, ref_cat, ref_dog
@@ -95,10 +95,13 @@ def main(config_str):
 
   # Predict
   for metric in metrics:
+    losses = torch.Tensor().double()
     cat_data = cat_bounds[str(metric)]
     dog_data = dog_bounds[str(metric)]
-    calc_loss(cat_data)
-    qwe
+    losses = calc_loss(cat_data, losses, iscat=True)
+    losses = calc_loss(dog_data, losses, iscat=True)
+    final_loss = losses.mean()
+    print(f'{metric}: {final_loss.item()}')
 
 
 def missclassified(cat_data, dog_data, im_paths):
@@ -121,12 +124,44 @@ def missclassified(cat_data, dog_data, im_paths):
   mis_data = dict(cat=mis_catdata, dog=mis_dogdata)
   return textlabels, mis_data, mis_im_paths
 
-def calc_loss(data):
-  loss = 0
+def calc_loss(data, losses, iscat):
+  in_min, in_max = 0.33, 0.67
+  out_min, out_max = -3, 3
+
+  span = lambda max_v, min_v: max_v - min_v 
+  in_span = span(in_max, in_min)
+  out_span = span(out_max, out_min)
+
+  loss_fn = torch.nn.BCELoss(reduction='none')
   for d in data:
-    print(d)
-    asd
+    d = np.clip(d, in_min, in_max)
+    cat = span(d[0], in_min) * out_span / in_span + out_min
+    dog = span(d[1], in_min) * out_span / in_span + out_min
+    pred = softmax([cat, dog])
+    pred = torch.tensor(pred).double()
+    
+    if iscat:
+      pred = pred[0]
+    else:
+      pred = pred[1]
+
+    loss = loss_fn(pred, torch.ones_like(pred))
+    losses = torch.cat((losses, loss.view(1,-1)))
+
+  return losses
+
+def softmax(x):
+  e_x = np.exp(x - np.max(x))
+  return e_x / e_x.sum(axis=0)
+
 
 if __name__ == '__main__':
   config_str = parse_args()
+  # losses = torch.Tensor().double()
+  # losses = calc_loss([[0.9, 0.3], [0.6, 0.5]], losses, iscat=True)
+  # losses = calc_loss([[0.3, 0.9], [0.6, 0.5]], losses, iscat=False)
+  # print(losses)
+  # final_loss = losses.mean()
+  # print(final_loss)
   main(config_str)
+  second_main()

@@ -8,8 +8,8 @@ def all_active_metrics():
     Top3kMetric(),
     Top10kMetric(),
     Bot10kMetric(),
-    Bot30kMetric(),
-    Top10Bot10Metric(),
+    # Bot30kMetric(),
+    # Top10Bot10Metric(),
   ]
   return all_active
 

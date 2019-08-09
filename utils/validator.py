@@ -55,11 +55,39 @@ class Validator():
     
     best_acc, best_acc_name = self.logger.log_accuracy(preds, step)
 
+    # Cat or not
+    # self.logger.cat_or_not(ref_cat, val_cats, val_dogs, step)
+
     # Save model on val improvement
     if best_acc > self.best_acc:
       self.save_model(best_acc, best_acc_name, step)
 
     self.model.train()
+
+  def val_normal(self, step):
+    self.model.eval()
+
+    preds = defaultdict(list)
+    for data in self.dataloader:
+      cat_input, dog_input = data
+      cat_preds = self.model.predict_normal(cat_input).cpu()
+      dog_preds = self.model.predict_normal(dog_input).cpu()
+
+      for cat_pred in cat_preds:
+        if cat_pred < 0.5:
+          preds['normal'].append(1)
+        else:
+          preds['normal'].append(0)
+
+      for dog_pred in dog_preds:
+        if dog_pred > 0.5:
+          preds['normal'].append(1)
+        else:
+          preds['normal'].append(0)
+
+    self.logger.log_normal_accuracy(preds, step)
+    self.model.train()
+
 
   def save_model(self, acc, name, step):
     self.best_acc = acc
@@ -69,7 +97,7 @@ class Validator():
 def calc_embeddings(model, dataloader):
   cat_embs, dog_embs = torch.tensor([]), torch.tensor([])
   for ind, data in enumerate(dataloader, 1):
-    if ind % 10 == 0:
+    if ind % 100 == 0:
       print(ind)
 
     # if ind > 10:

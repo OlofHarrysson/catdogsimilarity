@@ -6,6 +6,7 @@ from utils.utils import EMAverage
 import plotly.graph_objects as go
 from PIL import Image
 import torchvision.transforms as transforms
+from utils.validator import calc_distance
 
 
 def clear_envs(viz):
@@ -152,8 +153,8 @@ class Logger():
           xlabel='Steps',
           ylabel='Percentage over',
           title=f'Over the line',
-          ytickmin = 0,
-          ytickmax = 0.2,
+          # ytickmin = 0,
+          # ytickmax = 0.2,
           legend=['Cat', 'Dog', 'Catdog'],
       )
     )
@@ -211,8 +212,34 @@ class Logger():
         xlabel='Steps',
         ylabel='Accuracy',
         title=f'Val Accuracy',
-        ytickmin = 0.7,
-        ytickmax = 1,
+        # ytickmin = 0.7,
+        # ytickmax = 1,
+        legend=legends,
+      )
+    )
+
+    best_acc = max(accuracy)
+    name = legends[np.argmax(accuracy)]
+    return best_acc, name
+
+  def log_normal_accuracy(self, preds_dict, step):
+    accuracy, legends = [], []
+    for metric, preds in preds_dict.items():
+      accuracy.append(sum(preds) / len(preds))
+      legends.append(metric)
+
+    Y = np.array(accuracy).reshape((1, -1))
+    self.viz.line(
+      Y=Y,
+      X=[step],
+      update='append',
+      win='Normal Accuracy',
+      opts=dict(
+        xlabel='Steps',
+        ylabel='Accuracy',
+        title=f'Normal Accuracy',
+        # ytickmin = 0.7,
+        # ytickmax = 1,
         legend=legends,
       )
     )
@@ -271,3 +298,85 @@ class Logger():
       caption = im_path.stem.replace('.', '-')
       opts=dict(title=caption)
       self.viz.image(to_tensor(im), opts=opts)
+
+  def log_learning_rate(self, lr, step):
+    Y = np.array([lr])
+    self.viz.line(
+      Y=Y.reshape((1,1)),
+      X=[step],
+      update='append',
+      win='Learning Rate',
+      opts=dict(
+          xlabel='Steps',
+          ylabel='Value',
+          title='Learning Rate',
+      )
+    )
+
+
+  def cat_or_not(self, ref_cats, val_cats, val_dogs, step):
+    dl = divide_line = 0.5
+
+    cat_dists, dog_dists = [], []
+    for cat, dog in zip(val_cats, val_dogs):
+      distance = calc_distance(cat, ref_cats).mean()
+      cat_dists.append(distance.item())
+
+      distance = calc_distance(dog, ref_cats).mean()
+      dog_dists.append(distance.item())
+
+    n_cats_right = [1 if d >= dl else 0 for d in cat_dists]
+    cat_acc = sum(n_cats_right) / len(n_cats_right)
+
+    n_dogs_right = [1 if d < dl else 0 for d in dog_dists]
+    dog_acc = sum(n_dogs_right) / len(n_dogs_right)
+
+    both_acc = (cat_acc + dog_acc) / 2
+
+    Y = np.array([cat_acc, dog_acc, both_acc]).reshape((1, -1))
+    self.viz.line(
+      Y=Y,
+      X=[step],
+      update='append',
+      win='Iscat Accuracy',
+      opts=dict(
+        xlabel='Steps',
+        ylabel='Accuracy',
+        title=f'Iscat? Accuracy',
+        legend=['Cats', 'Dogs', 'Total'],
+      )
+    )
+
+    title_text = 'Iscat val'
+    fig = go.Figure()
+
+    violin_plot = lambda ys, name: go.Violin(y=ys,
+                            box_visible=True,
+                            meanline_visible=True,
+                            points='all',
+                            spanmode='hard',
+                            name=name,
+                            )
+
+    fig.add_trace(violin_plot(cat_dists, 'Cat'))
+    fig.add_trace(violin_plot(dog_dists, 'Dog'))
+
+    fig.update_layout(
+      shapes=[
+        # Line Horizontal
+        go.layout.Shape(
+          type="line",
+          x0=-0.5,
+          y0=divide_line,
+          x1=1.5,
+          y1=divide_line,
+          line=dict(
+            width=2,
+            dash="dot",
+          ),
+        ),
+          
+      ]
+    )
+
+    self.viz.plotlyplot(fig, win=title_text)

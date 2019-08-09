@@ -40,7 +40,7 @@ class DefaultConfig():
     self.end_lr = 1e-4
 
     self.optim_steps = 10000
-    self.lr_step_frequency = 100
+    self.lr_step_frequency = 1
 
     self.validation_freq = 100
 
@@ -68,7 +68,7 @@ class Laptop(DefaultConfig):
     self.use_gpu = False
     self.image_input_size = (30, 35)
     # self.n_model_features = 1
-    self.batch_size = 3
+    self.batch_size = 4
     # self.batch_size = 16
     self.val_dataset = 'data/datasets/catsdogs/val_mini'
 
@@ -79,9 +79,13 @@ class Colab(DefaultConfig):
   def __init__(self, config_str):
     super().__init__(config_str)
     self.num_workers = 16
-
     self.batch_size = 32
-    # self.validation_freq = 50
+    self.pretrained = False
+
+    self.start_lr = 5e-2
+    self.end_lr = 5e-3
+    self.validation_freq = 100
+
 
 class Predict(DefaultConfig):
   def __init__(self, config_str):
@@ -89,9 +93,10 @@ class Predict(DefaultConfig):
     self.use_gpu = False
     self.batch_size = 32
     # self.val_dataset = 'data/datasets/catsdogs/val_mini'
-    # self.reference_dataset = 'data/datasets/catsdogs/train'
-    self.reference_dataset = 'data/datasets/catsdogs/reference'
-    self.model_path = 'saved_models/topk-1-acc0.9875-step800.pth'
+    self.reference_dataset = 'data/datasets/catsdogs/train'
+    # self.reference_dataset = 'data/datasets/catsdogs/reference'
+    # self.model_path = 'output/Mean-acc0.9900-step700.pth'
+    self.model_path = 'saved_models/Mean-acc0.9900-step700.pth'
 
 
 
@@ -101,4 +106,6 @@ class Submission(DefaultConfig):
     self.use_gpu = False
     self.batch_size = 32
     self.val_dataset = 'data/datasets/catsdogs/test1'
-    self.model_path = 'output/mean-acc0.9837.pth'
+    # self.model_path = 'saved_models/Mean-acc0.9900-step700.pth'
+    self.model_path = 'saved_models/acc0.9925-step2600-only-directloss.pth'
+    
